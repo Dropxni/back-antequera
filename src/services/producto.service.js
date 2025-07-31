@@ -1,4 +1,5 @@
 const { Producto } = require('../../models');
+const { Op } = require('sequelize');
 
 const obtenerProductos = async (sucursal_id) => {
   return await Producto.findAll({
@@ -28,10 +29,26 @@ const eliminarProducto = async (id) => {
   return await producto.update({ activo: false });
 };
 
+const buscarPorCodigoYPorSucursal = async (codigo_barras, sucursal_id, excluirId = null) => {
+  const where = {
+    codigo_barras: codigo_barras,
+    sucursal_id,
+    activo: true
+  };
+
+  if (excluirId) {
+    where.id = { [Op.ne]: excluirId };
+  }
+
+  return await Producto.findOne({ where });
+};
+
+
 module.exports = {
   obtenerProductos,
   obtenerProductoPorId,
   crearProducto,
   actualizarProducto,
-  eliminarProducto
+  eliminarProducto,
+  buscarPorCodigoYPorSucursal
 };

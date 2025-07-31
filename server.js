@@ -11,9 +11,13 @@ app.use(express.json());
 // Rutas
 const authRoutes = require('./src/routes/auth.routes');
 const productosRoutes = require('./src/routes/producto.routes');
+const categoriaRoutes = require('./src/routes/categoria.routes');
+const usuarioRoutes = require('./src/routes/usuario.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/productos', productosRoutes);
+app.use('/api/categorias', categoriaRoutes);
+app.use('/api/usuarios', usuarioRoutes);
 
 // Ruta para servir imágenes estáticas
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));

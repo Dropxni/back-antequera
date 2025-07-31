@@ -8,6 +8,9 @@ const { crearProductoValidator, actualizarProductoValidator } = require('../vali
 router.get('/', verificarAutenticacion, controller.obtenerProductos);
 router.get('/:id', verificarAutenticacion, controller.obtenerProductoPorId);
 
+// Alertas
+router.get('/alertas', verificarAutenticacion, controller.obtenerAlertasInventario);
+
 router.post(
   '/',
   verificarAutenticacion,
