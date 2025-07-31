@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = process.env;
 
 const verificarAutenticacion = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1]; // "Bearer TOKEN"
+  const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
     return res.status(401).json({ mensaje: 'Token no proporcionado' });
@@ -17,4 +17,11 @@ const verificarAutenticacion = (req, res, next) => {
   }
 };
 
-module.exports = { verificarAutenticacion };
+const soloAdministrador = (req, res, next) => {
+  if (req.usuario?.rol !== 'administrador') {
+    return res.status(403).json({ mensaje: 'Acceso restringido a administradores' });
+  }
+  next();
+};
+
+module.exports = { verificarAutenticacion, soloAdministrador };
