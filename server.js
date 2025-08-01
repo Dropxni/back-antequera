@@ -13,11 +13,13 @@ const authRoutes = require('./src/routes/auth.routes');
 const productosRoutes = require('./src/routes/producto.routes');
 const categoriaRoutes = require('./src/routes/categoria.routes');
 const usuarioRoutes = require('./src/routes/usuario.routes');
+const sucursalRoutes = require('./src/routes/sucursal.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/productos', productosRoutes);
 app.use('/api/categorias', categoriaRoutes);
 app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/sucursales', sucursalRoutes);
 
 // Ruta para servir imágenes estáticas
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
