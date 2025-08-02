@@ -16,6 +16,8 @@ const usuarioRoutes = require('./src/routes/usuario.routes');
 const sucursalRoutes = require('./src/routes/sucursal.routes');
 const ventaRoutes = require('./src/routes/venta.routes');
 const corteCajaRoutes = require('./src/routes/corteCaja.routes');
+const creditoRoutes = require('./src/routes/credito.routes');
+const pagoCredito = require('./src/routes/pagoCredito.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/productos', productosRoutes);
@@ -24,6 +26,8 @@ app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/sucursales', sucursalRoutes);
 app.use('/api/ventas', ventaRoutes);
 app.use('/api/corte', corteCajaRoutes);
+app.use('/api/creditos', creditoRoutes);
+app.use('/api/pagos', pagoCredito);
 
 // Ruta para servir imágenes estáticas
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
