@@ -11,7 +11,7 @@ const registrarUsuarioValidator = [
 
   body('rol')
     .notEmpty().withMessage('El rol es obligatorio')
-    .isIn(['admin', 'empleado']).withMessage('Rol inválido'),
+    .isIn(['administrador', 'cajero']).withMessage('Rol inválido'),
 
   body('sucursal_id')
     .notEmpty().withMessage('La sucursal es obligatoria')
@@ -32,7 +32,7 @@ const actualizarUsuarioValidator = [
 
   body('rol')
     .notEmpty().withMessage('El rol es obligatorio')
-    .isIn(['admin', 'empleado']),
+    .isIn(['administrador', 'cajero']),
 
   body('sucursal_id')
     .notEmpty().withMessage('Sucursal requerida')
