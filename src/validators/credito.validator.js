@@ -1,47 +1,26 @@
-const { body, param } = require('express-validator');
+const { check } = require("express-validator");
 
-const crearCreditoValidator = [
-  body('venta_id')
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage('venta_id debe ser un número entero positivo'),
-  
-  body('cliente_id')
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage('cliente_id debe ser un número entero positivo'),
-  
-  body('monto_total')
+const validarRegistroCredito = [
+  check("nombre_cliente")
     .notEmpty()
-    .withMessage('monto_total es requerido')
-    .isFloat({ min: 0.01 })
-    .withMessage('monto_total debe ser un número mayor a 0'),
-  
-  body('fecha_limite_pago')
-    .notEmpty()
-    .withMessage('fecha_limite_pago es requerida')
+    .withMessage("El nombre del cliente es obligatorio"),
+  check("monto")
+    .isFloat({ gt: 0 })
+    .withMessage("El monto del crédito debe ser mayor a 0"),
+  check("fecha_limite")
+    .optional({ checkFalsy: true })
     .isISO8601()
-    .withMessage('fecha_limite_pago debe tener formato de fecha válido'),
-  
-  body('cliente_nombre')
-    .notEmpty()
-    .withMessage('cliente_nombre es requerido')
-    .isLength({ min: 2, max: 100 })
-    .withMessage('cliente_nombre debe tener entre 2 y 100 caracteres'),
-  
-  body('cliente_telefono')
+    .withMessage("La fecha límite debe tener un formato válido (YYYY-MM-DD)"),
+  check("venta_id")
     .optional()
-    .isLength({ min: 8, max: 15 })
-    .withMessage('cliente_telefono debe tener entre 8 y 15 caracteres')
-];
-
-const obtenerCreditoPorIdValidator = [
-  param('id')
-    .isInt({ min: 1 })
-    .withMessage('El ID debe ser un número entero positivo')
+    .isInt()
+    .withMessage("El ID de venta debe ser un número entero"),
+  check("cliente_id")
+    .optional()
+    .isInt()
+    .withMessage("El ID del cliente debe ser un número entero"),
 ];
 
 module.exports = {
-  crearCreditoValidator,
-  obtenerCreditoPorIdValidator
+  validarRegistroCredito,
 };

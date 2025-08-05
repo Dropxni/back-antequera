@@ -1,36 +1,51 @@
+// src/routes/credito.routes.js
 const { Router } = require("express");
-const { verificarAutenticacion } = require("../middlewares/auth.middleware");
-const {
-  crearCreditoValidator,
-  obtenerCreditoPorIdValidator,
-} = require("../validators/credito.validator");
 
+// Importaciones del controlador
 const creditoController = require("../controllers/credito.controller");
+const {
+  registrarCredito,
+  obtenerCreditoPorId,
+  cancelarCredito
+} = creditoController;
 
+// Verificar si obtenerCreditosActivos existe, si no, crear una función temporal
+const obtenerCreditosActivos = creditoController.obtenerCreditosActivos || 
+  ((req, res) => res.status(501).json({ message: "Función no implementada" }));
+
+// Importaciones de middlewares
+const { verificarAutenticacion } = require("../middlewares/auth.middleware");
+
+const validarCampos = require('../middlewares/validarCampos');
 const router = Router();
 
-// Crear crédito para una venta (versión simplificada para debug)
-router.post(
-  "/",
+// Crear nuevo crédito
+router.post('/', 
   verificarAutenticacion,
-  creditoController.registrarCredito
+    // Spread operator para el array de express-validator
+  validarCampos,
+  registrarCredito
 );
 
-// Obtener todos los créditos pendientes por sucursal
-router.get("/", verificarAutenticacion, creditoController.obtenerCreditosActivos);
+// Obtener créditos activos de la sucursal
+router.get(
+  "/activos",
+  verificarAutenticacion,
+  obtenerCreditosActivos
+);
 
-// Obtener detalle de un crédito por ID
+// Obtener un crédito por ID (con historial de pagos)
 router.get(
   "/:id",
   verificarAutenticacion,
-  creditoController.obtenerCreditoPorId
+  obtenerCreditoPorId
 );
 
 // Cancelar un crédito
 router.put(
-  "/:id/cancelar",
+  "/cancelar/:id",
   verificarAutenticacion,
-  creditoController.cancelarCredito
+  cancelarCredito
 );
 
 module.exports = router;
