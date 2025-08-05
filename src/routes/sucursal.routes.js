@@ -5,7 +5,7 @@ const { validarCrearSucursal, validarActualizarSucursal } = require('../validato
 const { verificarAutenticacion, soloAdministrador } = require('../middlewares/auth.middleware');
 const validarCampos = require('../middlewares/validarCampos');
 
-router.get('/', verificarAutenticacion, sucursalController.listar);
+router.get('/', sucursalController.listar);
 
 router.post(
   '/',
