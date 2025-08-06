@@ -30,7 +30,7 @@ const crearProducto = async (req, res) => {
     }
 
     // Validar código de barras único en la sucursal
-    const existe = await productoService.buscarPorCodigoYPorSucursal(data.codigoBarras, sucursalId);
+    const existe = await productoService.buscarPorCodigoYPorSucursal(data.codigo_barras, sucursalId);
     if (existe) {
       return res.status(400).json({ mensaje: 'Ya existe un producto con ese código de barras en esta sucursal.' });
     }
@@ -59,13 +59,13 @@ const actualizarProducto = async (req, res) => {
     }
 
     // Verificar si el código de barras ya existe en otro producto de la misma sucursal
-    const otro = await productoService.buscarPorCodigoYPorSucursal(data.codigoBarras, sucursalId, productoId);
+    const otro = await productoService.buscarPorCodigoYPorSucursal(data.codigo_barras, sucursalId, productoId);
     if (otro) {
       return res.status(400).json({ mensaje: 'Ya existe otro producto con ese código de barras en esta sucursal.' });
     }
 
     // ⚠️ Restringir reducción de stock si no es admin
-    if (rol !== 'admin' && Number(data.stock) < productoOriginal.stock) {
+    if (rol !== 'administrador' && Number(data.stock) < productoOriginal.stock) {
       return res.status(403).json({ mensaje: 'Solo un administrador puede reducir el stock.' });
     }
 
