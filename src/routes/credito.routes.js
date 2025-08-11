@@ -1,51 +1,26 @@
-// src/routes/credito.routes.js
-const { Router } = require("express");
-
-// Importaciones del controlador
-const creditoController = require("../controllers/credito.controller");
-const {
-  registrarCredito,
-  obtenerCreditoPorId,
-  cancelarCredito
-} = creditoController;
-
-// Verificar si obtenerCreditosActivos existe, si no, crear una función temporal
-const obtenerCreditosActivos = creditoController.obtenerCreditosActivos || 
-  ((req, res) => res.status(501).json({ message: "Función no implementada" }));
-
-// Importaciones de middlewares
-const { verificarAutenticacion } = require("../middlewares/auth.middleware");
-
+const express = require('express');
+const router = express.Router();
+const creditoController = require('../controllers/credito.controller');
+const { verificarAutenticacion, soloCajero, administradorOCajero } = require('../middlewares/auth.middleware');
+const { crearCreditoValidator, pagoCreditoValidator, validarIdCredito } = require('../validators/credito.validator');
 const validarCampos = require('../middlewares/validarCampos');
-const router = Router();
 
-// Crear nuevo crédito
-router.post('/', 
-  verificarAutenticacion,
-    // Spread operator para el array de express-validator
-  validarCampos,
-  registrarCredito
-);
+// Créditos activos
+router.get('/activos', verificarAutenticacion, creditoController.obtenerCreditosActivos);
 
-// Obtener créditos activos de la sucursal
-router.get(
-  "/activos",
-  verificarAutenticacion,
-  obtenerCreditosActivos
-);
+// Créditos finalizados (historial)
+router.get('/finalizados', verificarAutenticacion, creditoController.obtenerCreditosFinalizados);
 
-// Obtener un crédito por ID (con historial de pagos)
-router.get(
-  "/:id",
-  verificarAutenticacion,
-  obtenerCreditoPorId
-);
+// Detalle de un crédito con historial
+router.get('/:id', verificarAutenticacion, validarIdCredito, validarCampos, creditoController.obtenerCreditoPorId);
 
-// Cancelar un crédito
-router.put(
-  "/cancelar/:id",
-  verificarAutenticacion,
-  cancelarCredito
-);
+// Crear crédito
+router.post('/', verificarAutenticacion, soloCajero, crearCreditoValidator, validarCampos, creditoController.crearCredito);
+
+// Registrar pago a un crédito
+router.post('/pagos/:id', verificarAutenticacion, soloCajero, pagoCreditoValidator, validarCampos, creditoController.registrarPago);
+
+// Cancelar crédito
+router.put('/cancelar/:id', verificarAutenticacion, administradorOCajero, validarIdCredito, validarCampos, creditoController.cancelarCredito);
 
 module.exports = router;

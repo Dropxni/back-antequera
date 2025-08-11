@@ -1,47 +1,46 @@
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = process.env;
 
-// Middleware para verificar que el token JWT sea válido
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('La variable de entorno JWT_SECRET no está definida');
+}
+
+// Middleware: Verifica autenticación JWT
 const verificarAutenticacion = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
+  const authHeader = req.headers.authorization;
 
-  if (!token) {
-    return res.status(401).json({ mensaje: 'Token no proporcionado' });
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ mensaje: 'Token no proporcionado o malformado' });
   }
+
+  const token = authHeader.split(' ')[1];
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.usuario = decoded; // El token debe contener { id, username, rol, sucursal_id }
+
+    // Validar campos mínimos en el token decodificado
+    if (!decoded.id || !decoded.rol || !decoded.sucursal_id) {
+      return res.status(401).json({ mensaje: 'Token inválido: datos incompletos' });
+    }
+
+    req.usuario = decoded; // { id, username, rol, sucursal_id }
     next();
   } catch (err) {
     return res.status(401).json({ mensaje: 'Token inválido o expirado' });
   }
 };
 
-// Middleware para restringir acceso solo a administradores
-const soloAdministrador = (req, res, next) => {
-  if (req.usuario?.rol !== 'administrador') {
-    return res.status(403).json({ mensaje: 'Acceso restringido a administradores' });
+// Middleware genérico para verificar roles
+const verificarRol = (rolesPermitidos = []) => (req, res, next) => {
+  if (!req.usuario || !rolesPermitidos.includes(req.usuario.rol)) {
+    return res.status(403).json({ mensaje: 'Acceso denegado: rol no autorizado' });
   }
   next();
 };
 
-// Middleware para restringir acceso solo a cajeros
-const soloCajero = (req, res, next) => {
-  if (req.usuario?.rol !== 'cajero') {
-    return res.status(403).json({ mensaje: 'Acceso restringido a cajeros' });
-  }
-  next();
-};
-
-// Middleware para permitir acceso a ambos roles
-const administradorOCajero = (req, res, next) => {
-  const rol = req.usuario?.rol;
-  if (rol !== 'administrador' && rol !== 'cajero') {
-    return res.status(403).json({ mensaje: 'Acceso denegado' });
-  }
-  next();
-};
+const soloAdministrador = verificarRol(['administrador']);
+const soloCajero = verificarRol(['cajero']);
+const administradorOCajero = verificarRol(['administrador', 'cajero']);
 
 module.exports = {
   verificarAutenticacion,

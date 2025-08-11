@@ -32,8 +32,9 @@ const realizarVentaValidator = [
     .isFloat({ min: 0 }).withMessage('Cambio inválido'),
 
   body('cliente_id')
-    .if(body('metodo_pago').equals('credito'))
-    .isInt().withMessage('ID de cliente inválido'),
+  .if(body('metodo_pago').equals('credito'))
+  .optional({ nullable: true })
+  .isInt().withMessage('ID de cliente inválido'),
 
   body('nombre_cliente')
     .if(body('metodo_pago').equals('credito'))

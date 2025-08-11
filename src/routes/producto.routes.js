@@ -5,12 +5,19 @@ const { verificarAutenticacion } = require('../middlewares/auth.middleware');
 const validarCampos = require('../middlewares/validarCampos');
 const { crearProductoValidator, actualizarProductoValidator } = require('../validators/producto.validator');
 
-router.get('/', verificarAutenticacion, controller.obtenerProductos);
-router.get('/:id', verificarAutenticacion, controller.obtenerProductoPorId);
+// Buscar producto por código de barras debe ir antes de /:id para evitar conflictos de rutas
+router.get('/codigo/:codigo', verificarAutenticacion, controller.buscarPorCodigoBarras);
 
-// Alertas
+// Alertas de inventario
 router.get('/alertas', verificarAutenticacion, controller.obtenerAlertasInventario);
 
+// Obtener todos los productos de la sucursal
+router.get('/', verificarAutenticacion, controller.obtenerProductos);
+
+// Obtener producto por ID
+router.get('/:id', verificarAutenticacion, controller.obtenerProductoPorId);
+
+// Crear producto
 router.post(
   '/',
   verificarAutenticacion,
@@ -19,6 +26,7 @@ router.post(
   controller.crearProducto
 );
 
+// Actualizar producto
 router.put(
   '/:id',
   verificarAutenticacion,
@@ -27,7 +35,7 @@ router.put(
   controller.actualizarProducto
 );
 
+// Eliminar producto (desactivar)
 router.delete('/:id', verificarAutenticacion, controller.eliminarProducto);
-
 
 module.exports = router;

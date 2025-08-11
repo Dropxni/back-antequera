@@ -26,12 +26,17 @@ const actualizarProducto = async (id, data) => {
 const eliminarProducto = async (id) => {
   const producto = await Producto.findByPk(id);
   if (!producto) throw new Error('Producto no encontrado');
+  // No elimina registro, solo lo desactiva
   return await producto.update({ activo: false });
 };
 
+/**
+ * Busca un producto por código de barras y sucursal,
+ * opcionalmente excluyendo un id (para actualización)
+ */
 const buscarPorCodigoYPorSucursal = async (codigo_barras, sucursal_id, excluirId = null) => {
   const where = {
-    codigo_barras: codigo_barras,
+    codigo_barras,
     sucursal_id,
     activo: true
   };
@@ -42,7 +47,6 @@ const buscarPorCodigoYPorSucursal = async (codigo_barras, sucursal_id, excluirId
 
   return await Producto.findOne({ where });
 };
-
 
 module.exports = {
   obtenerProductos,

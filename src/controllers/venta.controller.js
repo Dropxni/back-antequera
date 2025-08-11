@@ -181,3 +181,13 @@ exports.resumenVentas = async (req, res) => {
     res.status(500).json({ ok: false, error: error.message });
   }
 };
+
+exports.otorgarCredito = async (req, res) => {
+  try {
+    const resultado = await otorgarCreditoService(req.body, req.usuario);
+    res.status(201).json(resultado);
+  } catch (error) {
+    console.error('Error al otorgar crédito:', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+};

@@ -1,105 +1,104 @@
-const { Credito, Venta, Cliente, PagoCredito, Usuario } = require("../../models");
-const { Op } = require("sequelize");
+const { Credito, PagoCredito, Cliente, Venta, Usuario } = require('../../models');
+const { Op } = require('sequelize');
 
-// Registrar un nuevo crédito
-const registrarCredito = async (data, cajeroId, sucursalId) => {
-  const {
-    venta_id,
-    cliente_id,
-    monto,
-    descripcion,
-    fecha_limite,
-    nombre_cliente
-  } = data;
+exports.listarCreditosActivos = async (sucursal_id) => {
+  return await Credito.findAll({
+    where: { sucursal_id, estado: 'activo' },
+    include: [{ model: Cliente, attributes: ['id', 'nombre'] }],
+    order: [['fecha_credito', 'DESC']]
+  });
+};
 
-  // Validaciones básicas opcionales (puedes mover a los validators si ya los tienes)
-  if (!venta_id || !cliente_id || !monto || !nombre_cliente) {
-    throw new Error("Faltan datos obligatorios para registrar el crédito.");
+exports.listarCreditosFinalizados = async (sucursal_id) => {
+  return await Credito.findAll({
+    where: { sucursal_id, estado: { [Op.in]: ['pagado', 'cancelado'] } },
+    include: [{ model: Cliente, attributes: ['id', 'nombre'] }],
+    order: [['fecha_credito', 'DESC']]
+  });
+};
+
+exports.obtenerCreditoConPagos = async (credito_id) => {
+  const credito = await Credito.findByPk(credito_id, {
+    include: [
+      { model: Cliente, attributes: ['id', 'nombre'] },
+      {
+        model: PagoCredito,
+        include: [{ model: Usuario, attributes: ['id', 'username'] }],
+        order: [['fecha_pago', 'ASC']]
+      }
+    ]
+  });
+  if (!credito) throw new Error('Crédito no encontrado');
+  return credito;
+};
+
+exports.crearCredito = async ({
+  cliente_id,
+  nombre_cliente,
+  monto,
+  descripcion,
+  fecha_limite,
+  venta_id,
+  cajero_id,
+  sucursal_id
+}) => {
+  // Verificar que al menos uno esté presente
+  if (!cliente_id && !nombre_cliente) {
+    throw new Error('Debe proporcionar un cliente existente o un nombre de cliente');
+  }
+
+  let nombreFinal = nombre_cliente;
+
+  // Si se proporciona cliente_id, buscar nombre
+  if (cliente_id) {
+    const cliente = await Cliente.findByPk(cliente_id);
+    if (!cliente) {
+      throw new Error('Cliente no encontrado');
+    }
+    nombreFinal = cliente.nombre;
   }
 
   const credito = await Credito.create({
-    venta_id,
-    cliente_id,
-    nombre_cliente,
+    cliente_id: cliente_id || null,
+    nombre_cliente: nombreFinal,
     monto,
     monto_pagado: 0,
     descripcion: descripcion || null,
-    estado: "activo",
-    sucursal_id: sucursalId,
-    cajero_id: cajeroId,
-    fecha_credito: new Date(),
     fecha_limite: fecha_limite || null,
+    venta_id: venta_id || null,
+    sucursal_id,
+    cajero_id,
+    estado: 'activo'
   });
 
   return credito;
 };
 
-// Obtener créditos activos por sucursal
-const obtenerCreditosPorSucursal = async (sucursalId) => {
-  return await Credito.findAll({
-    where: {
-      sucursal_id: sucursalId,
-      estado: "activo",
-    },
-    include: [
-      {
-        model: Cliente,
-        attributes: ["id", "nombre", "telefono"],
-      },
-      {
-        model: Venta,
-        attributes: ["id", "fecha", "total"],
-      },
-    ],
-    order: [["fecha_credito", "DESC"]],
-  });
-};
+exports.registrarPago = async (credito_id, { monto, observaciones, cajero_id }) => {
+  const credito = await Credito.findByPk(credito_id);
+  if (!credito || credito.estado !== 'activo') {
+    throw new Error('Crédito no válido o ya finalizado');
+  }
+  const nuevoPagado = parseFloat(credito.monto_pagado) + parseFloat(monto);
+  const nuevoEstado = nuevoPagado >= parseFloat(credito.monto) ? 'pagado' : 'activo';
 
-// Obtener detalles de un crédito con su historial de pagos
-const obtenerCreditoConPagos = async (creditoId) => {
-  const credito = await Credito.findByPk(creditoId, {
-    include: [
-      {
-        model: Cliente,
-        attributes: ["id", "nombre", "telefono"],
-      },
-      {
-        model: Venta,
-        attributes: ["id", "fecha", "total"],
-      },
-      {
-        model: PagoCredito,
-        include: [
-          {
-            model: Usuario,
-            attributes: ["id", "nombre"],
-          },
-        ],
-        order: [["fecha_pago", "DESC"]],
-      },
-    ],
+  const pago = await PagoCredito.create({
+    credito_id,
+    monto,
+    observaciones: observaciones || null,
+    cajero_id
   });
 
-  if (!credito) throw new Error("Crédito no encontrado");
-  return credito;
+  await credito.update({ monto_pagado: nuevoPagado, estado: nuevoEstado });
+  return pago;
 };
 
-// Cancelar un crédito (cambiar estado y poner saldo a 0)
-const cancelarCredito = async (creditoId) => {
-  const credito = await Credito.findByPk(creditoId);
-  if (!credito) throw new Error("Crédito no encontrado");
-  if (credito.estado === "pagado") throw new Error("El crédito ya fue pagado");
-
-  credito.estado = "cancelado";
-  credito.monto_pagado = credito.monto;
-  await credito.save();
-
+exports.cancelarCredito = async (credito_id) => {
+  const credito = await Credito.findByPk(credito_id);
+  if (!credito) throw new Error('Crédito no encontrado');
+  if (credito.estado === 'pagado' || credito.estado === 'cancelado') {
+    throw new Error('No se puede cancelar un crédito ya finalizado');
+  }
+  await credito.update({ monto_pagado: credito.monto, estado: 'cancelado' });
   return credito;
-};
-
-module.exports = {
-  registrarCredito,
-  obtenerCreditosPorSucursal,
-  obtenerCreditoConPagos,
-  cancelarCredito,
 };
